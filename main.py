@@ -1,14 +1,11 @@
-import sys
+from archive_reader import start_reading
+import auto_completor
 
-import database as db
-import algo as al
 
 def main():
-    dir_name = sys.argv[1]
-    db.store_lines(dir_name)
-    while (True):
-        word = input()
-        al.search(word)
+    directory = 'mockArchive'
+    data_structure = start_reading(directory)
+    auto_completor.init(data_structure)
 
 
 if __name__ == '__main__':

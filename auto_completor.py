@@ -4,6 +4,8 @@ Module that search the best completion in the data structure for a specific inpu
 from typing import List
 from archive_reader import start_reading
 
+data_structure = None
+
 
 class AutoCompleteData:
     pass
@@ -35,3 +37,9 @@ def search_substring(substring):
         if substring.lower() in sentence.lower():
             results.append(sentence)
     return results
+
+
+def init(data_struct):
+    global data_structure
+    data_structure = data_struct
+    pass
