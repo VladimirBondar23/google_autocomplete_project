@@ -1,8 +1,8 @@
 """
 Module that search the best completion in the data structure for a specific input
 """
+import archive_reader
 from typing import List
-from archive_reader import start_reading
 
 data_structure = None
 
@@ -33,7 +33,7 @@ def search_substring(substring):
     # This approach is less performant for prefixes than a Trie but is simple and works for any substring.
     results = []
     # The 'in' operator in Python checks for a substring.
-    for sentence in all_sentences:
+    for sentence in archive_reader.all_sentences:
         if substring.lower() in sentence.lower():
             results.append(sentence)
     return results

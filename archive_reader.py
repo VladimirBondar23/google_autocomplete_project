@@ -92,6 +92,7 @@ def read_sentences_from_files(directory):
 
 def start_reading(directory):
     print(f"Reading sentences from files in '{directory}'...")
+    global all_sentences
     all_sentences = read_sentences_from_files(directory)
 
     # Initialize the Trie and insert all sentences for prefix searching.
