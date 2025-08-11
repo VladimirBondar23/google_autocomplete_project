@@ -4,6 +4,7 @@ This module is responsible for loading the auto-completor archive data
 import os
 import json
 import time
+from typing import List
 
 DEFAULT_CACHE_FILE = "sentences_cache.json"
 

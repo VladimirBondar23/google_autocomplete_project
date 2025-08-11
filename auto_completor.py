@@ -6,6 +6,7 @@ import archive_reader
 import string
 import re
 
+
 class AutoCompleteData:
     def __init__(self,
                  completed_sentence: str,
@@ -37,45 +38,85 @@ class AutoCompletor:
         self.sentences = self.reader.get_sentences()
 
     def search(self, substring: str) -> List[AutoCompleteData]:
+        substring = re.sub(r"\s+", " ", substring).strip()
+        substring = re.sub(r",", "", substring).strip()
         results: List[AutoCompleteData] = []
+        fuzzy_candidates = {}
+        q_lower = substring.lower()
         for sentence in self.sentences:
-            if substring.lower() in sentence.content.lower():
-                if is_perfect_match(substring, sentence.content):
-                    # Give maximum possible score for perfect match
-                    score = len(substring) * 2  # max base score, no penalties
-                else:
-                    # Normal scoring for substring matches
-                    # Use the first occurrence for scoring
-                    start = sentence.content.lower().index(substring.lower())
+            text = sentence.content
+            tl = text.lower()
+
+            if q_lower in tl:
+                # 1) perfect phrase/word match
+                if is_perfect_match(substring, text):
+                    start = tl.index(q_lower)
                     end = start + len(substring)
-                    score = 0
+                    score = len(substring) * 2
+                    results.append(AutoCompleteData(
+                        completed_sentence=text,
+                        source_text=sentence.source_path,
+                        offset=sentence.offset,
+                        score=score,
+                        matched_substring=substring,
+                        match_span=(start, end),
+                    ))
                     continue
-                results.append(AutoCompleteData(
-                    completed_sentence=sentence.content,
-                    source_text=sentence.source_path,
-                    offset=sentence.offset,
-                    score=score,
-                    matched_substring=substring,
-                    match_span=(start, end) if 'start' in locals() else None
-                ))
-        return results
 
+        if not results and len(results) < 5:
+            fuzzy_rx = self.build_regex(substring)
+            fuzzy_candidates = set(self.search_sentences(substring))
 
+        return results + list(fuzzy_candidates)
+
+    def build_regex(self, query):
+        escaped = re.escape(query)
+        patterns = [escaped]  # Perfect match
+        # Single character substitution
+        for i in range(len(query)):
+            pattern = escaped[:i] + '.' + escaped[i + 1:]
+            patterns.append(pattern)
+        # Single character addition
+        for i in range(len(query) + 1):
+            pattern = escaped[:i] + '.' + escaped[i:]
+            patterns.append(pattern)
+        # # Single character deletion (subtraction) - fixed here
+        for i in range(len(query)):
+            part = query[:i] + query[i + 1:]
+            pattern = re.escape(part)
+            patterns.append(pattern)
+        combined_pattern = '|'.join(patterns)
+        return re.compile(combined_pattern)
+
+    def search_sentences(self, query):
+        regex = self.build_regex(query)
+        return [s for s in self.sentences if regex.search(s.content)]
 
     def get_best_k_completions(self, prefix: str) -> List[AutoCompleteData]:
-        # TODO: sort and return the best 5
-        pass
-
+        hits = self.search(prefix)
+        # Rank: higher score first; tie-break by sentence text (case-insensitive)
+        hits.sort(key=lambda r: (-r.score, r.content.lower()))
+        return hits[:5]
 
 
 def is_perfect_match(query: str, sentence: str) -> bool:
-        """
-        Checks if query is a prefix of any word in sentence.
-        Case-insensitive, ignores punctuation.
-        """
-        # Use regex to match words and compare lowercase
-        words = re.findall(r"\b\w+", sentence.lower())
-        return any(word.startswith(query.lower()) for word in words)
+    """
+    Perfect match == query appears as a phrase of whole words in the sentence.
+    Case-insensitive, ignores punctuation and variable spaces between words.
+    Examples that will match "my name":
+      "My name"
+      "my, name"
+      "MY   NAME"
+      "my - name"
+    """
+    tokens = re.findall(r"\w+", query.lower())
+    if not tokens:
+        return False
+    # Build a pattern that allows any non-word chars between tokens, and
+    # enforces word boundaries at the ends, so we don't match inside larger words.
+    pattern = r"\b" + r"\W+".join(map(re.escape, tokens)) + r"\b"
+    return re.search(pattern, sentence.lower()) is not None
+
 
 def calc_score(query: str, match_text: str) -> int:
     """
