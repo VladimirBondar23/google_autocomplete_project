@@ -5,6 +5,7 @@ from typing import List, Tuple
 import archive_reader
 import string
 import re
+import os
 
 
 class AutoCompleteData:
@@ -23,12 +24,8 @@ class AutoCompleteData:
         self.match_span = match_span
 
     def __repr__(self):
-        return (f"AutoCompleteData("
-                f"score={self.score}, "
-                f"match_span={self.match_span}, "
-                f"file='{self.source_text}', "
-                f"line={self.offset}, "
-                f"text='{self.completed_sentence}')")
+        source_name = os.path.basename(self.source_text)
+        return f'{self.completed_sentence} ({source_name} {self.offset})'
 
 
 class AutoCompletor:
@@ -92,10 +89,18 @@ class AutoCompletor:
         regex = self.build_regex(query)
         return [s for s in self.sentences if regex.search(s.content)]
 
+    def get_text(self, r):
+        if hasattr(r, 'content'):
+            return r.content.lower()
+        elif hasattr(r, 'completed_sentence'):
+            return r.completed_sentence.lower()
+        else:
+            return ""  # fallback if neither attribute
+
     def get_best_k_completions(self, prefix: str) -> List[AutoCompleteData]:
         hits = self.search(prefix)
         # Rank: higher score first; tie-break by sentence text (case-insensitive)
-        hits.sort(key=lambda r: (-r.score, r.content.lower()))
+        hits.sort(key=lambda r: (-r.score, self.get_text(r)))
         return hits[:5]
 
 
