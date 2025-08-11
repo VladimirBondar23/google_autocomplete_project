@@ -1,14 +1,33 @@
 import auto_completor
 
+ARCHIVE_DIRECTORY = "Archive"
+LOADING_MSG = "Loading the files and preparing the system"
+READY_MSG = "The system is ready."
+PROMPT_MSG = "Enter your text: "
+EXIT_SYMBOL = '#'
+COMPLETIONS_LABEL = "Here are 5 suggestions:"
+
+
+def load_archive() -> auto_completor.AutoCompletor:
+    print(LOADING_MSG)
+    completor = auto_completor.AutoCompletor(ARCHIVE_DIRECTORY)
+    print(READY_MSG, end=' ')
+    return completor
+
+
+def start_user_interaction(completor: auto_completor.AutoCompletor):
+    text = input(PROMPT_MSG)
+    while text != EXIT_SYMBOL:
+        completions = completor.get_best_k_completions(text)
+        print(COMPLETIONS_LABEL)
+        for index, completion in enumerate(completions):
+            print(f'{index + 1}. {completion}')
+        text = input(PROMPT_MSG)
+
 
 def main():
-    directory = 'Archive'
-    completor = auto_completor.AutoCompletor(directory)
-    text = input("Enter text: ")
-    results = completor.search(text)
-    print(f'found {len(results)} results')
-    for result in results[:10]:
-        print(result)
+    completor = load_archive()
+    start_user_interaction(completor)
 
 
 if __name__ == '__main__':
