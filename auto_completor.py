@@ -1,7 +1,13 @@
 """
 Module that search the best completion in the data structure for a specific input
 """
+from typing import List
 import archive_reader
+
+
+class AutoCompleteData:
+    # TODO: Implement me!
+    pass
 
 
 class AutoCompletor:
@@ -17,3 +23,7 @@ class AutoCompletor:
             if substring in sentence.content:
                 results.append(sentence)
         return results
+
+    def get_best_k_completions(self, prefix: str) -> List[AutoCompleteData]:
+        # TODO: implement scoring calculation
+        pass
