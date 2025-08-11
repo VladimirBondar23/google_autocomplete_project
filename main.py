@@ -6,6 +6,7 @@ READY_MSG = "The system is ready."
 PROMPT_MSG = "Enter your text: "
 EXIT_SYMBOL = '#'
 COMPLETIONS_LABEL = "Here are 5 suggestions:"
+NO_SUGGESTIONS_LABEL = "No suggestions were found!"
 
 
 def load_archive() -> auto_completor.AutoCompletor:
@@ -19,9 +20,12 @@ def start_user_interaction(completor: auto_completor.AutoCompletor):
     text = input(PROMPT_MSG)
     while text != EXIT_SYMBOL:
         completions = completor.get_best_k_completions(text)
-        print(COMPLETIONS_LABEL)
-        for index, completion in enumerate(completions):
-            print(f'{index + 1}. {completion}')
+        if len(completions) == 0:
+            print(NO_SUGGESTIONS_LABEL)
+        else:
+            print(COMPLETIONS_LABEL)
+            for index, completion in enumerate(completions):
+                print(f'{index + 1}. {completion}')
         text = input(PROMPT_MSG)
 
 

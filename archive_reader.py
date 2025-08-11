@@ -28,7 +28,8 @@ class Sentence:
         }
 
     def __repr__(self):
-        return f"Sentence(content={self.content!r}, file={self.source_path!r}, line={self.offset})"
+        source_name = os.path.basename(self.source_path)
+        return f'{self.content} ({source_name} {self.offset})'
 
 
 class Reader:
