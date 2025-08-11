@@ -19,11 +19,12 @@ class AutoCompletor:
     def search(self, substring):
         results = []
         # TODO: add 2 more searches: 1 - single char missing, 2 - single char added
+        # TODO: implement scoring calculation
         for sentence in self.sentences:
             if substring in sentence.content:
                 results.append(sentence)
         return results
 
     def get_best_k_completions(self, prefix: str) -> List[AutoCompleteData]:
-        # TODO: implement scoring calculation
+        # TODO: sort and return the best 5
         pass

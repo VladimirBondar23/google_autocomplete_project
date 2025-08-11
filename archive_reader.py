@@ -22,6 +22,7 @@ class Reader:
         self.read_sentences_with_metadata()
 
     def read_sentences_with_metadata(self):
+        # TODO: read only on first run, write to json file and read from it later
         self.sentences = []
         # Collect tuples of (sentence, source_file_path, line_number)
         for dirpath, _, filenames in os.walk(self.archive_path):
