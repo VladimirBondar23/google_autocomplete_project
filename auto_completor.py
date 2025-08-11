@@ -60,7 +60,7 @@ class AutoCompletor:
                     ))
                     continue
 
-        if not results and len(results) < 5:
+        if not results or len(results) < 5:
             fuzzy_rx = self.build_regex(substring)
             fuzzy_candidates = set(self.search_sentences(substring))
 
