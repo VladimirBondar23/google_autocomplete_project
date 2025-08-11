@@ -60,30 +60,56 @@ class AutoCompletor:
                     ))
                     continue
 
-        if not results and len(results) < 5:
+        if not results:
             fuzzy_rx = self.build_regex(substring)
-            fuzzy_candidates = set(self.search_sentences(substring))
+            fuzzy_candidates = self.search_sentences(substring)  # list of Sentence
 
-        return results + list(fuzzy_candidates)
+            for s in fuzzy_candidates:
+                m = fuzzy_rx.search(s.content)
+                if not m:
+                    continue
+                start, end = m.span()  # end is exclusive; don't +1
+                matched_text = s.content[start:end]
+                score = calc_score(substring, matched_text)
+
+                results.append(AutoCompleteData(
+                    completed_sentence=s.content,
+                    source_text=s.source_path,
+                    offset=s.offset,
+                    score=score,
+                    matched_substring=substring,
+                    match_span=(start, end),
+                ))
+
+        return results
 
     def build_regex(self, query):
-        escaped = re.escape(query)
-        patterns = [escaped]  # Perfect match
-        # Single character substitution
-        for i in range(len(query)):
-            pattern = escaped[:i] + '.' + escaped[i + 1:]
-            patterns.append(pattern)
-        # Single character addition
-        for i in range(len(query) + 1):
-            pattern = escaped[:i] + '.' + escaped[i:]
-            patterns.append(pattern)
-        # # Single character deletion (subtraction) - fixed here
-        for i in range(len(query)):
-            part = query[:i] + query[i + 1:]
-            pattern = re.escape(part)
-            patterns.append(pattern)
-        combined_pattern = '|'.join(patterns)
-        return re.compile(combined_pattern)
+        q = query
+        parts = []
+
+        # addition in TEXT (user missed one char) – prefer these first
+        for i in range(len(q) + 1):
+            left = re.escape(q[:i])
+            right = re.escape(q[i:])
+            parts.append(f"{left}.{right}")  # e.g., .nam, n.am, na.m, nam.
+
+        # substitution (same length)
+        for i in range(len(q)):
+            left = re.escape(q[:i])
+            right = re.escape(q[i + 1:])
+            parts.append(f"{left}.{right}")  # e.g., n.m
+
+        # deletion in TEXT (text shorter by 1)
+        for i in range(len(q)):
+            left = re.escape(q[:i])
+            right = re.escape(q[i + 1:])
+            parts.append(f"{left}{right}")  # e.g., nm
+
+        # exact last
+        parts.append(re.escape(q))
+
+        union = "|".join(parts)
+        return re.compile(rf"\b(?:{union})\b", re.IGNORECASE)
 
     def search_sentences(self, query):
         regex = self.build_regex(query)
@@ -125,43 +151,65 @@ def is_perfect_match(query: str, sentence: str) -> bool:
 
 def calc_score(query: str, match_text: str) -> int:
     """
-    Calculates the score between the user query and the matched text,
-    following the project definition rules.
-
-    query: the text the user typed
-    match_text: the matching substring from the sentence
+    Spec-accurate scoring with exactly one edit allowed:
+      - Base = 2 * number of matching characters (spaces count, punctuation ignored)
+      - If lengths equal -> ONE substitution (apply incorrect-letter penalty at that index)
+      - If lengths differ by 1 -> ONE insertion/deletion (apply missing/added penalty at skip index)
+      - Never stack penalties
     """
-    # --- 1. Normalize (lowercase, remove punctuation) ---
+
+
+    # Normalize: lowercase, drop punctuation, collapse spaces
     table = str.maketrans('', '', string.punctuation)
-    q_norm = query.lower().translate(table)
-    m_norm = match_text.lower().translate(table)
+    def norm(s: str) -> str:
+        return re.sub(r"\s+", " ", s.lower().translate(table)).strip()
 
-    # Base score: 2 points per matching letter (including spaces)
-    # We'll also track mismatches to apply penalties.
-    score = 0
-    penalties = 0
+    q = norm(query)
+    m = norm(match_text)
 
-    # --- 2. Compare character-by-character ---
-    min_len = min(len(q_norm), len(m_norm))
-    for i in range(min_len):
-        if q_norm[i] == m_norm[i]:
-            score += 2
+    # More than one edit away
+    if abs(len(q) - len(m)) > 1:
+        return 0
+
+    # Exact
+    if q == m:
+        return 2 * len(q)
+
+    # Same length -> single substitution
+    if len(q) == len(m):
+        diffs = [i for i, (a, b) in enumerate(zip(q, m)) if a != b]
+        if len(diffs) != 1:
+            return 0
+        i = diffs[0]
+        base = 2 * (len(m) )             # all but the wrong char match
+        pen  = incorrect_letter_penalty(i)
+        return base - pen
+
+    # Length differs by 1 -> single insertion/deletion
+    # Let L be the longer, S the shorter (skip one char in L to match S)
+    if len(q) > len(m):
+        L, S = q, m            # user typed extra char (delete from query)
+    else:
+        L, S = m, q            # text has extra char (insert in text)
+
+    k = None
+    i = j = 0
+    while i < len(L) and j < len(S):
+        if L[i] == S[j]:
+            i += 1; j += 1
         else:
-            # wrong character
-            penalties += incorrect_letter_penalty(i)
+            if k is not None:
+                return 0       # would need >1 edit
+            k = i              # skip L[i]
+            i += 1
+    if k is None:
+        # extra char is the last one in L
+        k = len(L) - 1
 
-    # --- 3. If length mismatch, treat as added/missing letters ---
-    length_diff = len(q_norm) - len(m_norm)
-    if length_diff != 0:
-        # only 1 edit is allowed according to the project
-        if abs(length_diff) > 1:
-            return 0  # invalid match
-        # Apply penalty for the position of the missing/added char
-        penalties += missing_or_added_penalty(min_len)
+    base = 2 * len(m)                  # all chars of the shorter string match
+    pen  = missing_or_added_penalty(k) # position of the skipped char in L
+    return base - pen
 
-    # Apply penalties
-    score -= penalties
-    return score
 
 
 def incorrect_letter_penalty(position: int) -> int:
