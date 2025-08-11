@@ -1,11 +1,14 @@
-from archive_reader import start_reading
 import auto_completor
 
 
 def main():
-    directory = 'mockArchive'
-    data_structure = start_reading(directory)
-    auto_completor.init(data_structure)
+    directory = 'Archive'
+    completor = auto_completor.AutoCompletor(directory)
+    text = input("Enter text: ")
+    results = completor.search(text)
+    print(f'found {len(results)} results')
+    for result in results[:10]:
+        print(result)
 
 
 if __name__ == '__main__':

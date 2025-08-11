@@ -2,44 +2,18 @@
 Module that search the best completion in the data structure for a specific input
 """
 import archive_reader
-from typing import List
-
-data_structure = None
 
 
-class AutoCompleteData:
-    pass
+class AutoCompletor:
+    def __init__(self, archive_path):
+        self.archive_path = archive_path
+        self.reader = archive_reader.Reader(archive_path)
+        self.sentences = self.reader.get_sentences()
 
-
-def get_best_completions(prefix: str) -> List[AutoCompleteData]:
-    pass
-
-
-def search(prefix):
-    node = data_structure.root
-    # Traverse the Trie to the node corresponding to the end of the prefix.
-    for char in prefix:
-        if char not in node.children:
-            return []  # No sentences found with this prefix.
-        node = node.children[char]
-
-    # Once at the prefix's end node, collect all sentences from there.
-    results = []
-    data_structure.collect_all_sentences(node, results)
-    return results
-
-
-def search_substring(substring):
-    # This approach is less performant for prefixes than a Trie but is simple and works for any substring.
-    results = []
-    # The 'in' operator in Python checks for a substring.
-    for sentence in archive_reader.all_sentences:
-        if substring.lower() in sentence.lower():
-            results.append(sentence)
-    return results
-
-
-def init(data_struct):
-    global data_structure
-    data_structure = data_struct
-    pass
+    def search(self, substring):
+        results = []
+        # TODO: add 2 more searches: 1 - single char missing, 2 - single char added
+        for sentence in self.sentences:
+            if substring in sentence.content:
+                results.append(sentence)
+        return results
