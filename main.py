@@ -2,7 +2,7 @@ import auto_completor
 
 
 def main():
-    directory = 'Archive'
+    directory = 'students_materials/Archive'
     completor = auto_completor.AutoCompletor(directory)
     text = input("Enter text: ")
     results = completor.search(text)

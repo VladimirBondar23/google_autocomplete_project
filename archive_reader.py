@@ -2,7 +2,7 @@
 Module that reads text files from archive
 """
 import os
-
+import time
 
 class Sentence:
     def __init__(self, content: str, source_path: str, offset: int):
