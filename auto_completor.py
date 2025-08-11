@@ -39,6 +39,7 @@ class AutoCompletor:
         substring = re.sub(r",", "", substring).strip()
         results: List[AutoCompleteData] = []
         fuzzy_candidates = {}
+        set_of_seen = set()
         q_lower = substring.lower()
         for sentence in self.sentences:
             text = sentence.content
@@ -58,9 +59,10 @@ class AutoCompletor:
                         matched_substring=substring,
                         match_span=(start, end),
                     ))
+                    set_of_seen.add(text)
                     continue
 
-        if not results:
+        if not results or len(results) < 5:
             fuzzy_rx = self.build_regex(substring)
             fuzzy_candidates = self.search_sentences(substring)  # list of Sentence
 
@@ -70,6 +72,8 @@ class AutoCompletor:
                     continue
                 start, end = m.span()  # end is exclusive; don't +1
                 matched_text = s.content[start:end]
+                if s.content in set_of_seen:
+                    continue
                 score = calc_score(substring, matched_text)
 
                 results.append(AutoCompleteData(
