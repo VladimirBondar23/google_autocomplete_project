@@ -36,9 +36,12 @@ def start_user_interaction(completor: auto_completor.AutoCompletor):
     text = input(PROMPT_MSG)
     while text != EXIT_INPUT:
         text_for_search = text
-        if text[len(text) - 1] == INPUT_SEPARATOR_SYMBOL:
+        last_char_index = len(text) - 1
+        if text[last_char_index] == INPUT_SEPARATOR_SYMBOL:
+            # get rid of the seperator symbol before searching
             text_for_search = text[:-1]
-        print("searching for" + text_for_search)
+
+        # get the best completion and print them
         completions = completor.get_best_k_completions(text_for_search)
         if len(completions) == 0:
             print(NO_SUGGESTIONS_LABEL)
@@ -46,7 +49,9 @@ def start_user_interaction(completor: auto_completor.AutoCompletor):
             print(COMPLETIONS_LABEL)
             for index, completion in enumerate(completions):
                 print(f'{index + 1}. {completion}')
-        if text[len(text) - 1] == INPUT_SEPARATOR_SYMBOL:
+
+        # preparing next search input text
+        if text[last_char_index] == INPUT_SEPARATOR_SYMBOL:
             text_for_search = ''
             text = ''
         text += input(PROMPT_MSG + text_for_search)

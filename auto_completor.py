@@ -7,6 +7,7 @@ import string
 import re
 import os
 
+
 class AutoCompleteData:
     """Container for a single autocomplete candidate.
 
@@ -36,6 +37,7 @@ class AutoCompleteData:
         """Return a compact, human-readable representation for debugging."""
         source_name = os.path.basename(self.source_text)
         return f'{self.completed_sentence} ({source_name} {self.offset})'
+
 
 class AutoCompletor:
     def __init__(self, archive_path):
@@ -179,7 +181,7 @@ class AutoCompletor:
                     r: Result-like object.
 
                 Returns:
-                    Lowercased string suitable as a secondary sort key; empty string if missing.
+                    Lowercase string suitable as a secondary sort key; empty string if missing.
                 """
         if hasattr(r, 'content'):
             return r.content.lower()
@@ -205,6 +207,7 @@ class AutoCompletor:
         hits.sort(key=lambda r: (-r.score, self.get_text(r)))
         return hits[:5]
 
+
 def is_perfect_match(query: str, sentence: str) -> bool:
     """
     Perfect match == query appears as a phrase of whole words in the sentence.
@@ -220,6 +223,7 @@ def is_perfect_match(query: str, sentence: str) -> bool:
         return False
     pattern = r"\b" + r"\W+".join(map(re.escape, tokens)) + r"\b"
     return re.search(pattern, sentence.lower()) is not None
+
 
 def calc_score(query: str, match_text: str) -> int:
     """
@@ -242,6 +246,7 @@ def calc_score(query: str, match_text: str) -> int:
             Integer score (>= 0). Returns 0 if more than one edit would be required.
         """
     table = str.maketrans('', '', string.punctuation)
+
     def norm(s: str) -> str:
         return re.sub(r"\s+", " ", s.lower().translate(table)).strip()
 
@@ -259,31 +264,33 @@ def calc_score(query: str, match_text: str) -> int:
         if len(diffs) != 1:
             return 0
         i = diffs[0]
-        base = 2 * (len(m) )
-        pen  = incorrect_letter_penalty(i)
+        base = 2 * (len(m))
+        pen = incorrect_letter_penalty(i)
         return base - pen
 
     if len(q) > len(m):
-        L, S = q, m
+        l, s = q, m
     else:
-        L, S = m, q
+        l, s = m, q
 
     k = None
     i = j = 0
-    while i < len(L) and j < len(S):
-        if L[i] == S[j]:
-            i += 1; j += 1
+    while i < len(l) and j < len(s):
+        if l[i] == s[j]:
+            i += 1
+            j += 1
         else:
             if k is not None:
                 return 0
             k = i
             i += 1
     if k is None:
-        k = len(L) - 1
+        k = len(l) - 1
 
     base = 2 * len(m)
-    pen  = missing_or_added_penalty(k)
+    pen = missing_or_added_penalty(k)
     return base - pen
+
 
 def incorrect_letter_penalty(position: int) -> int:
     """Penalty for incorrect letter at given 0-based position."""
@@ -297,6 +304,7 @@ def incorrect_letter_penalty(position: int) -> int:
         return 2
     else:
         return 1
+
 
 def missing_or_added_penalty(position: int) -> int:
     """Penalty for missing or added letter at given 0-based position."""
