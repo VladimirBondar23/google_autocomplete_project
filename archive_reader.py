@@ -1,11 +1,14 @@
 """
 This module is responsible for loading the auto-completor archive data
+
+@Author: Gal Helner
 """
 import os
 import json
 import time
-from typing import List
+from typing import List, Any
 
+# constants
 DEFAULT_CACHE_FILE = "sentences_cache.json"
 
 
@@ -13,13 +16,17 @@ class Sentence:
     """
     A class to represent a single archive sentence
     """
-    def __init__(self, content: str, source_path: str, offset: int, score=0):
+    def __init__(self, content: str, source_path: str, offset: int, score: int = 0):
         self.content = content
         self.source_path = source_path
         self.offset = offset
         self.score = score
 
-    def to_dict(self):
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Converts the object to a dictionary representation for json dump.
+        :return: dictionary representation the object.
+        """
         return {
             "content": self.content,
             "source_path": self.source_path,
@@ -36,7 +43,7 @@ class Reader:
     """
     A class to read the auto-completor archive data
     """
-    def __init__(self, archive_path, cache_filepath=DEFAULT_CACHE_FILE):
+    def __init__(self, archive_path: str, cache_filepath: str = DEFAULT_CACHE_FILE):
         self.archive_path = archive_path
         self.cache_filepath = cache_filepath
         self.sentences = []
