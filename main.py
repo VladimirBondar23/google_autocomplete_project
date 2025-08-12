@@ -13,7 +13,6 @@ READY_MSG = "The system is ready."
 PROMPT_MSG = "Enter your text: "
 EXIT_INPUT = 'exit'
 INPUT_SEPARATOR_SYMBOL = '#'
-COMPLETIONS_LABEL = "Here are 5 suggestions:"
 NO_SUGGESTIONS_LABEL = "No suggestions were found!"
 
 
@@ -46,7 +45,7 @@ def start_user_interaction(completor: auto_completor.AutoCompletor):
         if len(completions) == 0:
             print(NO_SUGGESTIONS_LABEL)
         else:
-            print(COMPLETIONS_LABEL)
+            print(f"Here are {len(completions)} suggestions")
             for index, completion in enumerate(completions):
                 print(f'{index + 1}. {completion}')
 
