@@ -2,15 +2,20 @@ import os
 import asyncio
 from google import genai
 import database
+from dotenv import load_dotenv  # pip install python-dotenv
 
-API_KEY = "AIzaSyBH4Bw2bYp7tzMLkG7YHWHB7VOYm4sUXS4"
 DEFAULT_MODEL = "gemini-2.5-flash"
-
 
 class AiModel:
     def __init__(self):
-        os.environ["GEMINI_API_KEY"] = API_KEY
-        self.client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+        # Load variables from .env file
+        load_dotenv()
+
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("Missing GEMINI_API_KEY. Please set it in .env file.")
+
+        self.client = genai.Client(api_key=api_key)
         self.model = DEFAULT_MODEL
 
     async def get_best_completions(self, text_to_complete: str, username: str) -> str:
@@ -42,7 +47,7 @@ Your task:
 - Completions must be concise and directly follow the partial input.
 - Rank them by likelihood and naturalness (most likely first).
 - Keep formatting plain text, one completion per line.
-- completions should be the whole text include the partial input entered.
+- Completions should be the whole text including the partial input entered.
 """
 
         # Gemini API call wrapped in thread to avoid blocking
