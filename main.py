@@ -11,7 +11,8 @@ ARCHIVE_DIRECTORY = "Archive"
 LOADING_MSG = "Loading the files and preparing the system"
 READY_MSG = "The system is ready."
 PROMPT_MSG = "Enter your text: "
-EXIT_SYMBOL = '#'
+EXIT_INPUT = 'exit'
+INPUT_SEPARATOR_SYMBOL = '#'
 COMPLETIONS_LABEL = "Here are 5 suggestions:"
 NO_SUGGESTIONS_LABEL = "No suggestions were found!"
 
@@ -33,15 +34,22 @@ def start_user_interaction(completor: auto_completor.AutoCompletor):
     :param completor: AutoCompletor instance
     """
     text = input(PROMPT_MSG)
-    while text != EXIT_SYMBOL:
-        completions = completor.get_best_k_completions(text)
+    while text != EXIT_INPUT:
+        text_for_search = text
+        if text[len(text) - 1] == INPUT_SEPARATOR_SYMBOL:
+            text_for_search = text[:-1]
+        print("searching for" + text_for_search)
+        completions = completor.get_best_k_completions(text_for_search)
         if len(completions) == 0:
             print(NO_SUGGESTIONS_LABEL)
         else:
             print(COMPLETIONS_LABEL)
             for index, completion in enumerate(completions):
                 print(f'{index + 1}. {completion}')
-        text = input(PROMPT_MSG)
+        if text[len(text) - 1] == INPUT_SEPARATOR_SYMBOL:
+            text_for_search = ''
+            text = ''
+        text += input(PROMPT_MSG + text_for_search)
 
 
 def main():
