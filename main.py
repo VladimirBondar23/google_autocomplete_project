@@ -1,22 +1,23 @@
 from ai_model import AiModel
+import asyncio
 
 MOCK_USERNAME = "mock user"
 EXIT_INPUT = "exit"
 
 
-def run(model):
+async def run(model):
     text_to_complete = input("Enter text to complete: ")
     while text_to_complete != EXIT_INPUT:
-        completions = model.get_best_completions(text_to_complete, MOCK_USERNAME)
+        completions = await model.get_best_completions(text_to_complete, MOCK_USERNAME)
         print(completions)
         text_to_complete = input("Enter text to complete: ")
 
 
-def main():
+async def main():
     model = AiModel()
-    model.add_user(MOCK_USERNAME)
-    run(model)
+    await model.add_user(MOCK_USERNAME)
+    await run(model)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
